@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicio 01 - Planetas</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f7;
+      padding: 25px;
+    }
+
+    form {
+      max-width: 450px;
+      margin: auto;
+      padding: 25px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px #00000020;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2459a6;
+    }
+
+    form div {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+    }
+
+    input[readonly] {
+      background-color: #f3f6fa;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background-color: #2459a6;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      height: 250px;
+      object-fit: contain;
+      margin: 15px auto;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <form id="formBuscador">
+    <h2>Buscador de planetas</h2>
+
+    <div>
+      <label for="idplaneta">ID del planeta</label>
+      <input
+        type="text"
+        id="idplaneta"
+        placeholder="Ejemplo: 3"
+        required
+      >
+      <button type="submit" id="boton">Buscar</button>
+    </div>
+
+    <div>
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" readonly>
+    </div>
+
+    <div>
+      <label for="clima">Clima</label>
+      <input type="text" id="clima" readonly>
+    </div>
+
+    <div>
+      <label for="terreno">Terreno</label>
+      <input type="text" id="terreno" readonly>
+    </div>
+
+    <div>
+      <label for="poblacion">Población</label>
+      <input type="text" id="poblacion" readonly>
+    </div>
+
+    <div>
+      <label for="diametro">Diámetro (km)</label>
+      <input type="text" id="diametro" readonly>
+    </div>
+
+    <div>
+      <p>Imagen del planeta</p>
+      <img id="imagen" alt="Imagen del planeta" hidden>
+      <p id="mensajeImagen" role="status"></p>
+    </div>
+  </form>
+
+  <script>
+    // Referencias a los controles
+    const formulario = document.getElementById('formBuscador')
+    const id = document.getElementById('idplaneta')
+    const nombre = document.getElementById('nombre')
+    const clima = document.getElementById('clima')
+    const terreno = document.getElementById('terreno')
+    const poblacion = document.getElementById('poblacion')
+    const diametro = document.getElementById('diametro')
+    const imagen = document.getElementById('imagen')
+    const mensajeImagen = document.getElementById('mensajeImagen')
+    const boton = document.getElementById('boton')
+
+    // SWAPI no proporciona imágenes.
+    // Coloca tus archivos en la carpeta imagenes
+    // o reemplaza las rutas por enlaces directos.
+    const imagenesPlanetas = {
+      1: 'imagenes/tatooine.jpg',
+      2: 'imagenes/alderaan.jpg',
+      3: 'imagenes/yavin.jpg'
+    }
+
+    // Evento submit
+    formulario.addEventListener('submit', (event) => {
+      event.preventDefault()
+
+      if (boton.disabled) return
+
+      obtenerPlaneta(id.value.trim())
+    })
+
+    async function obtenerPlaneta(id) {
+      // Limpiar los resultados anteriores
+      nombre.value = ''
+      clima.value = ''
+      terreno.value = ''
+      poblacion.value = ''
+      diametro.value = ''
+
+      imagen.hidden = true
+      imagen.onerror = null
+      imagen.removeAttribute('src')
+      mensajeImagen.textContent = ''
+
+      // Validar el ID
+      if (!/^[1-9]\d*$/.test(id) ||
+          !Number.isSafeInteger(Number(id))) {
+        alert('Ingresa un ID entero mayor que cero')
+        return
+      }
+
+      const API_URL = `https://swapi.dev/api/planets/${id}/`
+
+      boton.disabled = true
+      boton.textContent = 'Buscando...'
+
+      try {
+        const respuesta = await fetch(API_URL)
+
+        if (!respuesta.ok) {
+          if (respuesta.status === 404) {
+            throw new Error('No existe un planeta con ese ID')
+          }
+
+          throw new Error('Error de comunicación con el servidor')
+        }
+
+        const datos = await respuesta.json()
+
+        // Mostrar los cinco campos
+        nombre.value = datos.name
+        clima.value = datos.climate
+        terreno.value = datos.terrain
+        poblacion.value = datos.population
+        diametro.value = datos.diameter
+
+        // Mostrar la imagen correspondiente
+        const rutaImagen = imagenesPlanetas[id]
+
+        if (rutaImagen) {
+          imagen.alt = `Imagen de ${datos.name}`
+
+          imagen.onerror = () => {
+            imagen.hidden = true
+            mensajeImagen.textContent =
+              'No se pudo cargar la imagen. Revisa la ruta del archivo.'
+          }
+
+          imagen.src = rutaImagen
+          imagen.hidden = false
+        } else {
+          mensajeImagen.textContent =
+            'No se ha agregado una imagen para este planeta.'
+        }
+
+      } catch (e) {
+        console.error(e)
+
+        if (e instanceof TypeError) {
+          alert('No se pudo conectar con la API. Revisa tu conexión.')
+        } else {
+          alert(e.message)
+        }
+
+      } finally {
+        boton.disabled = false
+        boton.textContent = 'Buscar'
+      }
+    }
+  </script>
+</body>
+</html>

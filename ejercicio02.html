@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicio 02 - Naves espaciales</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f7;
+      padding: 25px;
+    }
+
+    form {
+      max-width: 450px;
+      margin: auto;
+      padding: 25px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px #00000020;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2459a6;
+    }
+
+    form div {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+    }
+
+    input[readonly] {
+      background-color: #f3f6fa;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background-color: #2459a6;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      height: 250px;
+      object-fit: contain;
+      margin: 15px auto;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <form id="formBuscador">
+    <h2>Buscador de naves espaciales</h2>
+
+    <div>
+      <label for="idnave">ID de la nave</label>
+      <input
+        type="text"
+        id="idnave"
+        placeholder="Ejemplo: 9"
+        required
+      >
+      <button type="submit" id="boton">Buscar</button>
+    </div>
+
+    <div>
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" readonly>
+    </div>
+
+    <div>
+      <label for="modelo">Modelo</label>
+      <input type="text" id="modelo" readonly>
+    </div>
+
+    <div>
+      <label for="fabricante">Fabricante</label>
+      <input type="text" id="fabricante" readonly>
+    </div>
+
+    <div>
+      <label for="longitud">Longitud (m)</label>
+      <input type="text" id="longitud" readonly>
+    </div>
+
+    <div>
+      <label for="tripulacion">Tripulación</label>
+      <input type="text" id="tripulacion" readonly>
+    </div>
+
+    <div>
+      <p>Imagen de la nave</p>
+      <img id="imagen" alt="Imagen de la nave" hidden>
+      <p id="mensajeImagen" role="status"></p>
+    </div>
+  </form>
+
+  <script>
+    // Referencias a los controles
+    const formulario = document.getElementById('formBuscador')
+    const id = document.getElementById('idnave')
+    const nombre = document.getElementById('nombre')
+    const modelo = document.getElementById('modelo')
+    const fabricante = document.getElementById('fabricante')
+    const longitud = document.getElementById('longitud')
+    const tripulacion = document.getElementById('tripulacion')
+    const imagen = document.getElementById('imagen')
+    const mensajeImagen = document.getElementById('mensajeImagen')
+    const boton = document.getElementById('boton')
+
+    // Coloca tus archivos en la carpeta imagenes
+    // o reemplaza las rutas por enlaces directos.
+    const imagenesNaves = {
+      9: 'imagenes/estrella-muerte.jpg',
+      10: 'imagenes/halcon-milenario.jpg',
+      12: 'imagenes/x-wing.jpg'
+    }
+
+    // Evento submit
+    formulario.addEventListener('submit', (event) => {
+      event.preventDefault()
+
+      if (boton.disabled) return
+
+      obtenerNave(id.value.trim())
+    })
+
+    async function obtenerNave(id) {
+      // Limpiar los resultados anteriores
+      nombre.value = ''
+      modelo.value = ''
+      fabricante.value = ''
+      longitud.value = ''
+      tripulacion.value = ''
+
+      imagen.hidden = true
+      imagen.onerror = null
+      imagen.removeAttribute('src')
+      mensajeImagen.textContent = ''
+
+      // Validar el ID
+      if (!/^[1-9]\d*$/.test(id) ||
+          !Number.isSafeInteger(Number(id))) {
+        alert('Ingresa un ID entero mayor que cero')
+        return
+      }
+
+      const API_URL = `https://swapi.dev/api/starships/${id}/`
+
+      boton.disabled = true
+      boton.textContent = 'Buscando...'
+
+      try {
+        const respuesta = await fetch(API_URL)
+
+        if (!respuesta.ok) {
+          if (respuesta.status === 404) {
+            throw new Error('No existe una nave con ese ID')
+          }
+
+          throw new Error('Error de comunicación con el servidor')
+        }
+
+        const datos = await respuesta.json()
+
+        // Mostrar los cinco campos
+        nombre.value = datos.name
+        modelo.value = datos.model
+        fabricante.value = datos.manufacturer
+        longitud.value = datos.length
+        tripulacion.value = datos.crew
+
+        // Mostrar la imagen correspondiente
+        const rutaImagen = imagenesNaves[id]
+
+        if (rutaImagen) {
+          imagen.alt = `Imagen de ${datos.name}`
+
+          imagen.onerror = () => {
+            imagen.hidden = true
+            mensajeImagen.textContent =
+              'No se pudo cargar la imagen. Revisa la ruta del archivo.'
+          }
+
+          imagen.src = rutaImagen
+          imagen.hidden = false
+        } else {
+          mensajeImagen.textContent =
+            'No se ha agregado una imagen para esta nave.'
+        }
+
+      } catch (e) {
+        console.error(e)
+
+        if (e instanceof TypeError) {
+          alert('No se pudo conectar con la API. Revisa tu conexión.')
+        } else {
+          alert(e.message)
+        }
+
+      } finally {
+        boton.disabled = false
+        boton.textContent = 'Buscar'
+      }
+    }
+  </script>
+</body>
+</html>

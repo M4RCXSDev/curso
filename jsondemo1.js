@@ -6,36 +6,38 @@
 // 1 array (cadenas)
 // 1 array (objetos)
 // 1 objeto (arrays)
-const CR7 = {
-  nombres: "Cristiano Ronaldo",
-  apellidos: "Dos Santos Aveiro",
-  edad: 41,
-  altura: 1.87,
-  tatuajes: null,
-  sigueJugando: true,  
-  equipos: ["Sporting De Lisboa", "Manchester United", "Real MAdrid", "Juventus"],
-  premios: [
-    {premio: "Puskas", cantidad:1},
-    {premio: "Balon de oro", cantidad:5},
-    {premio: "Champions League", cantidad:5}
+const pelicula = {
+  titulo: "Avatar",
+  anio: 2009,
+  idiomas: ["Ingles", "Español"],
+  duracionMin: 162,
+  generos: ["Accion", "Ciencia ficcion", "Aventura"],
+  presupuesto: 237000000,
+  recaudacion: 2923706026,
+  elenco: [
+    { actor: "Sam Worthington", personaje: "Jake Sully" },
+    { actor: "Zoe Saldana", personaje: "Neytiri" },
+    { actor: "Sigourney Weaver", personaje: "Dra. Grace Augustine" },
+    { actor: "Stephen Lang", personaje: "Coronel Miles Quaritch" },
+    { actor: "Michelle Rodriguez", personaje: "Trudy Chacon" },
+    { actor: "Giovanni Ribisi", personaje: "Parker Selfridge" }
   ],
-  estadisticas: { 
-    goles:[ 450,145,101],
-    asistencias:[120,57,20]
- }
+  direccion: ["James Cameron"],
+  escritores: ["James Cameron"]
 }
 
-//¿Cúal es el ultimo equipo en el que jugo?
-console.log(CR7.equipos[CR7.equipos.length -1])
+// ¿Cuál es el último género de la película?
+console.log(pelicula.generos[pelicula.generos.length - 1])
 
-//¿Cuántos puskas tiene?
-console.log(CR7.premios[0].cantidad)
+// ¿Quién es el primer actor?
+console.log(pelicula.elenco[0].actor)
 
-//¿Cuantas Champions League tiene?
-console.log(CR7.premios[CR7.premios.length -1].cantidad)
+// ¿Quién es el último actor?
+console.log(pelicula.elenco[pelicula.elenco.length - 1].actor)
 
-//Mostrar todos sus goles y asistencias
-const goles = CR7.estadisticas.goles
-goles.forEach(goles => {
-  console.log(goles)
+// Mostrar todos sus actores y personajes
+const elenco = pelicula.elenco
+elenco.forEach(actor => {
+  console.log(actor.actor)
+  console.log(actor.personaje)
 });

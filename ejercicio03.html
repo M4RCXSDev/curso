@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicio 03 - Dragon Ball</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f7;
+      padding: 25px;
+    }
+
+    form {
+      max-width: 450px;
+      margin: auto;
+      padding: 25px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px #00000020;
+    }
+
+    h2 {
+      text-align: center;
+      color: #e87500;
+    }
+
+    form div {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    input[readonly],
+    textarea[readonly] {
+      background-color: #f3f6fa;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background-color: #e87500;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      height: 300px;
+      object-fit: contain;
+      margin: 15px auto;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <form id="formBuscador">
+    <h2>Buscador de Dragon Ball</h2>
+
+    <div>
+      <label for="idpersonaje">ID del personaje</label>
+      <input
+        type="text"
+        id="idpersonaje"
+        placeholder="Ejemplo: 1"
+        required
+      >
+      <button type="submit" id="boton">Buscar</button>
+    </div>
+
+    <div>
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" readonly>
+    </div>
+
+    <div>
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" readonly></textarea>
+    </div>
+
+    <div>
+      <p>Imagen del personaje</p>
+      <img id="imagen" alt="Imagen del personaje" hidden>
+      <p id="mensajeImagen" role="status"></p>
+    </div>
+  </form>
+
+  <script>
+    // Referencias a los controles
+    const formulario = document.getElementById('formBuscador')
+    const id = document.getElementById('idpersonaje')
+    const nombre = document.getElementById('nombre')
+    const descripcion = document.getElementById('descripcion')
+    const imagen = document.getElementById('imagen')
+    const mensajeImagen = document.getElementById('mensajeImagen')
+    const boton = document.getElementById('boton')
+
+    // Evento submit
+    formulario.addEventListener('submit', (event) => {
+      event.preventDefault()
+
+      if (boton.disabled) return
+
+      obtenerPersonaje(id.value.trim())
+    })
+
+    async function obtenerPersonaje(id) {
+      // Limpiar los resultados anteriores
+      nombre.value = ''
+      descripcion.value = ''
+
+      imagen.hidden = true
+      imagen.onerror = null
+      imagen.removeAttribute('src')
+      mensajeImagen.textContent = ''
+
+      // Validar el ID
+      if (!/^[1-9]\d*$/.test(id) ||
+          !Number.isSafeInteger(Number(id))) {
+        alert('Ingresa un ID entero mayor que cero')
+        return
+      }
+
+      const API_URL =
+        `https://dragonball-api.com/api/characters/${id}`
+
+      boton.disabled = true
+      boton.textContent = 'Buscando...'
+
+      try {
+        const respuesta = await fetch(API_URL)
+
+        if (!respuesta.ok) {
+          if (respuesta.status === 404) {
+            throw new Error('No existe un personaje con ese ID')
+          }
+
+          throw new Error('Error de comunicación con el servidor')
+        }
+
+        const datos = await respuesta.json()
+
+        // Mostrar nombre y descripción
+        nombre.value = datos.name
+        descripcion.value =
+          datos.description || 'Sin descripción disponible'
+
+        // La API proporciona la imagen del personaje
+        if (datos.image) {
+          imagen.alt = `Imagen de ${datos.name}`
+
+          imagen.onerror = () => {
+            imagen.hidden = true
+            mensajeImagen.textContent =
+              'No se pudo cargar la imagen del personaje.'
+          }
+
+          imagen.src = datos.image
+          imagen.hidden = false
+        } else {
+          mensajeImagen.textContent =
+            'Este personaje no tiene imagen disponible.'
+        }
+
+      } catch (e) {
+        console.error(e)
+
+        if (e instanceof TypeError) {
+          alert('No se pudo conectar con la API. Revisa tu conexión.')
+        } else {
+          alert(e.message)
+        }
+
+      } finally {
+        boton.disabled = false
+        boton.textContent = 'Buscar'
+      }
+    }
+  </script>
+</body>
+</html>
